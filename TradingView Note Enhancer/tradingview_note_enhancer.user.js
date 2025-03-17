@@ -45,6 +45,15 @@
                 <label><input type="checkbox" id="checkbox-volume"> High Volume</label><br>
                 <label><input type="checkbox" id="checkbox-ema"> Holding 20EMA</label><br>
                 <label><input type="checkbox" id="checkbox-sector"> Strong Sector</label><br>
+                <label>Rating: 
+                    <span id="rating-picker">
+                        <span class="star" data-value="1">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="4">★</span>
+                    </span>
+                </label>
+                <br>
             </div>
 
             <div id="close-fields" style="display: none;">
@@ -52,8 +61,11 @@
                 <label><input type="radio" name="close-type" value="stop-loss" checked> Stop Loss</label>
                 <label><input type="radio" name="close-type" value="take-profit"> Take Profit</label><br>
                 <div id="stop-loss-fields">
-                    <label><input type="checkbox" id="checkbox-break-ema"> Breaking 20EMA</label><br>
-                    <label><input type="checkbox" id="checkbox-break-trend"> Breaking Trendline</label><br>
+                    <label><input type="radio" name="stop-loss-reason" value="lod" checked> LOD</label><br>
+                    <label><input type="radio" name="stop-loss-reason" value="trendline"> Trendline</label><br>
+                    <label><input type="radio" name="stop-loss-reason" value="10ema"> 10EMA</label><br>
+                    <label><input type="radio" name="stop-loss-reason" value="21ema"> 21EMA</label><br>
+                    <label><input type="radio" name="stop-loss-reason" value="breakeven"> Breakeven</label><br>
                 </div>
                 <div id="take-profit-fields" style="display: none;">
                     <label><input type="checkbox" id="checkbox-critical-price"> Critical Price Level</label><br>
@@ -119,6 +131,26 @@
             radio.addEventListener('change', updateCloseFields);
         });
 
+        // Add styles for the rating picker
+        document.querySelectorAll('.star').forEach(star => {
+            star.style.cursor = 'pointer';
+            star.style.fontSize = '20px';
+            star.style.color = '#ccc';
+            star.addEventListener('mouseover', function() {
+                let value = parseInt(this.dataset.value);
+                document.querySelectorAll('.star').forEach(s => {
+                    s.style.color = parseInt(s.dataset.value) <= value ? '#FFD700' : '#ccc';
+                });
+            });
+            star.addEventListener('click', function() {
+                let value = parseInt(this.dataset.value);
+                document.getElementById('rating-picker').dataset.selectedRating = value;
+                document.querySelectorAll('.star').forEach(s => {
+                    s.style.color = parseInt(s.dataset.value) <= value ? '#FFD700' : '#ccc';
+                });
+            });
+        });
+
         document.getElementById('done-popup').addEventListener('click', function() {
             let tradeType = document.querySelector('input[name="trade-type"]:checked').value;
 
@@ -132,7 +164,10 @@
                 let holding20EMA = document.getElementById('checkbox-ema').checked ? '✅ Holding 20EMA' : '❌ Holding 20EMA';
                 let strongSector = document.getElementById('checkbox-sector').checked ? '✅ Strong Sector' : '❌ Strong Sector';
 
-                summary += `ADR: ${adr}\nLoD: ${lod}\n${highVolume}\n${holding20EMA}\n${strongSector}`;
+                let rating = document.getElementById('rating-picker').dataset.selectedRating || '0';
+                let emojiStars = '⭐'.repeat(parseInt(rating)); // Generate emoji stars based on the rating
+
+                summary += `ADR: ${adr}\nLoD: ${lod}\n${highVolume}\n${holding20EMA}\n${strongSector}\nRating: ${emojiStars || 'N/A'}`;
             } else {
                 let size = document.getElementById('size-input').value || 'N/A';
                 let closeType = document.querySelector('input[name="close-type"]:checked').value;
@@ -140,10 +175,10 @@
                 summary += `Size: ${size}\n${closeType.toUpperCase()}\n`;
 
                 if (closeType === 'stop-loss') {
-                    let breaking20EMA = document.getElementById('checkbox-break-ema').checked ? '✅ Breaking 20EMA' : '❌ Breaking 20EMA';
-                    let breakingTrendline = document.getElementById('checkbox-break-trend').checked ? '✅ Breaking Trendline' : '❌ Breaking Trendline';
+                    let stopLossReason = document.querySelector('input[name="stop-loss-reason"]:checked').value;
 
-                    summary += `${breaking20EMA}\n${breakingTrendline}`;
+                    // Use the original format for Stop Loss Reason
+                    summary += `Stop Loss Reason: ${stopLossReason}`;
                 } else {
                     let criticalPrice = document.getElementById('checkbox-critical-price').checked ? '✅ Critical Price Level' : '❌ Critical Price Level';
 
