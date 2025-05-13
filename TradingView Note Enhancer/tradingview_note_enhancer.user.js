@@ -45,6 +45,7 @@
                 <label><input type="checkbox" id="checkbox-volume"> High Volume</label><br>
                 <label><input type="checkbox" id="checkbox-ema"> Holding 20EMA</label><br>
                 <label><input type="checkbox" id="checkbox-sector"> Strong Sector</label><br>
+                <label><input type="checkbox" id="checkbox-lower-highs"> Building Lower Highs</label><br>
                 <label>Rating: 
                     <span id="rating-picker">
                         <span class="star" data-value="1">★</span>
@@ -69,6 +70,7 @@
                 </div>
                 <div id="take-profit-fields" style="display: none;">
                     <label><input type="checkbox" id="checkbox-critical-price"> Critical Price Level</label><br>
+                    <label>Percentage: <input type="text" id="percentage-input" class="styled-input"></label><br>
                 </div>
             </div>
 
@@ -163,11 +165,12 @@
                 let highVolume = document.getElementById('checkbox-volume').checked ? '✅ High Volume' : '❌ High Volume';
                 let holding20EMA = document.getElementById('checkbox-ema').checked ? '✅ Holding 20EMA' : '❌ Holding 20EMA';
                 let strongSector = document.getElementById('checkbox-sector').checked ? '✅ Strong Sector' : '❌ Strong Sector';
+                let lowerHighs = document.getElementById('checkbox-lower-highs').checked ? '✅ Building Lower Highs' : '❌ Building Lower Highs';
 
                 let rating = document.getElementById('rating-picker').dataset.selectedRating || '0';
-                let emojiStars = '⭐'.repeat(parseInt(rating)); // Generate emoji stars based on the rating
+                let emojiStars = '⭐'.repeat(parseInt(rating));
 
-                summary += `ADR: ${adr}\nLoD: ${lod}\n${highVolume}\n${holding20EMA}\n${strongSector}\nRating: ${emojiStars || 'N/A'}`;
+                summary += `ADR: ${adr}\nLoD: ${lod}\n${highVolume}\n${holding20EMA}\n${strongSector}\n${lowerHighs}\nRating: ${emojiStars || 'N/A'}`;
             } else {
                 let size = document.getElementById('size-input').value || 'N/A';
                 let closeType = document.querySelector('input[name="close-type"]:checked').value;
@@ -177,12 +180,12 @@
                 if (closeType === 'stop-loss') {
                     let stopLossReason = document.querySelector('input[name="stop-loss-reason"]:checked').value;
 
-                    // Use the original format for Stop Loss Reason
                     summary += `Stop Loss Reason: ${stopLossReason}`;
                 } else {
                     let criticalPrice = document.getElementById('checkbox-critical-price').checked ? '✅ Critical Price Level' : '❌ Critical Price Level';
+                    let percentage = document.getElementById('percentage-input').value || 'N/A';
 
-                    summary += `${criticalPrice}`;
+                    summary += `${criticalPrice}\nPercentage: ${percentage}`;
                 }
             }
 
