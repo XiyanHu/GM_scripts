@@ -80,6 +80,14 @@
 
         document.body.appendChild(popup);
 
+        function escListener(e) {
+            if (e.key === "Escape") {
+                popup.remove();
+                document.removeEventListener('keydown', escListener);
+            }
+        }
+        document.addEventListener('keydown', escListener);
+
         // Style input fields
         document.querySelectorAll('.styled-input').forEach(input => {
             input.style.width = '100px';
@@ -201,9 +209,107 @@
         updateCloseFields();
     }
 
+    function createIndustryPopup() {
+        document.querySelector('#industry-popup')?.remove();
+
+        let popup = document.createElement('div');
+        popup.id = 'industry-popup';
+        popup.style.position = 'fixed';
+        popup.style.top = '50%';
+        popup.style.left = '50%';
+        popup.style.transform = 'translate(-50%, -50%)';
+        popup.style.background = '#fff';
+        popup.style.padding = '20px';
+        popup.style.boxShadow = '0px 4px 15px rgba(0, 0, 0, 0.3)';
+        popup.style.borderRadius = '10px';
+        popup.style.zIndex = '10001';
+        popup.style.width = '320px';
+        popup.style.fontFamily = 'Arial, sans-serif';
+        popup.style.color = '#000';
+
+        popup.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 12px;">
+                <strong style="font-size: 16px;">Industry Rank Lookup</strong>
+                <button id="close-industry-popup" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #999;">✖</button>
+            </div>
+            <input id="industry-input" type="text" placeholder="Type symbol or industry..." style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; margin-bottom: 10px;">
+            <div id="industry-result" style="margin-top: 10px; min-height: 30px;"></div>
+        `;
+
+        document.body.appendChild(popup);
+
+        function escListenerIndustry(e) {
+            if (e.key === "Escape") {
+                popup.remove();
+                document.removeEventListener('keydown', escListenerIndustry);
+            }
+        }
+        document.addEventListener('keydown', escListenerIndustry);
+
+        document.getElementById('close-industry-popup').onclick = () => popup.remove();
+
+        let input = document.getElementById('industry-input');
+        let resultDiv = document.getElementById('industry-result');
+
+        // Spinner CSS
+        let spinner = document.createElement('div');
+        spinner.id = 'industry-spinner';
+        spinner.style.display = 'none';
+        spinner.innerHTML = `<div style="display: flex; justify-content: center; align-items: center;">
+            <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;"></div>
+        </div>
+        <style>
+        @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+        </style>`;
+        resultDiv.appendChild(spinner);
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && input.value.trim()) {
+                resultDiv.textContent = '';
+                spinner.style.display = 'block';
+                resultDiv.appendChild(spinner);
+
+                const url = `https://1qorxqru4k.execute-api.us-east-1.amazonaws.com/dev/industry/${encodeURIComponent(input.value.trim())}`;
+                console.log('[Industry Lookup] Fetching:', url);
+
+                fetch(url, {
+                    headers: { "x-api-key": "xxxxx" }
+                })
+                .then(r => {
+                    console.log('[Industry Lookup] Response status:', r.status);
+                    return r.json();
+                })
+                .then(data => {
+                    console.log('[Industry Lookup] Response data:', data);
+                    spinner.style.display = 'none';
+                    if (data && data.message && data.industry) {
+                        // Create hyperlink for industry
+                        const industry = data.industry;
+                        const industryParam = industry.toLowerCase().replace(/\s+/g, '');
+                        const finvizUrl = `https://finviz.com/screener.ashx?v=141&f=ind_${industryParam}&o=-volume`;
+                        const msg = `${industry} - ${data.message}`;
+
+                        // Set HTML with hyperlink
+                        resultDiv.innerHTML = `<a href="${finvizUrl}" target="_blank" style="color:#1976d2;text-decoration:underline;">${industry}</a> - ${data.message}`;
+
+                        // Copy plain text (with URL) to clipboard
+                        navigator.clipboard.writeText(`${industry} (${finvizUrl}) - ${data.message}`);
+                    } else {
+                        resultDiv.textContent = 'No data found.';
+                        console.log('[Industry Lookup] No data found:', data);
+                    }
+                })
+                .catch(err => {
+                    spinner.style.display = 'none';
+                    resultDiv.textContent = 'Error fetching data.';
+                    console.error('[Industry Lookup] Fetch error:', err);
+                });
+            }
+        });
+    }
+
     function addButtonToTextarea() {
         let textarea = document.querySelector('.textarea-x5KHDULU');
-
         if (!textarea || textarea.dataset.hasButton) return;
 
         let button = document.createElement('button');
@@ -220,15 +326,33 @@
         button.style.fontSize = '14px';
         button.style.zIndex = '9999';
 
+        // New question mark button
+        let qButton = document.createElement('button');
+        qButton.textContent = '❓';
+        qButton.title = 'Industry Rank Lookup';
+        qButton.style.position = 'absolute';
+        qButton.style.top = '5px';
+        qButton.style.right = '35px';
+        qButton.style.background = '#f0f0f0';
+        qButton.style.color = '#333';
+        qButton.style.border = '1px solid #ccc';
+        qButton.style.borderRadius = '4px';
+        qButton.style.cursor = 'pointer';
+        qButton.style.padding = '3px 6px';
+        qButton.style.fontSize = '14px';
+        qButton.style.zIndex = '9999';
+
         let container = textarea.closest('.container-WDZ0PRNh');
         if (container) {
             container.style.position = 'relative';
+            container.appendChild(qButton);
             container.appendChild(button);
         }
 
         textarea.dataset.hasButton = 'true';
 
         button.addEventListener('click', createPopup);
+        qButton.addEventListener('click', createIndustryPopup);
     }
 
     setInterval(addButtonToTextarea, 1000);
